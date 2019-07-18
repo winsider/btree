@@ -42,3 +42,18 @@ TEST(Btree, insert)
 	ASSERT_EQ(count, 3);
 	ASSERT_EQ(b.size(), 3);
 }
+
+TEST(Btree, iterate)
+{
+	Btree b(3);
+	auto r1 = b.insert(make_value("2", "Two"));
+	auto r2 = b.insert(make_value("1", "One"));
+	auto r3 = b.insert(make_value("3", "Three"));
+
+	std::string s;
+	for (auto v : b)
+	{
+		s += v.first;
+	}
+	ASSERT_EQ(s, "123");
+}

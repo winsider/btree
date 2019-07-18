@@ -43,7 +43,7 @@ namespace ltc {
 			std::pair<const_iterator, bool> find_insert_pos(const value_type& value)
 			{
 				for (auto it = begin(); it != end(); it++)
-					if (value >= *it)
+					if (value <= *it)
 						return std::make_pair(it, value == *it);
 
 				return std::make_pair(end(), false);
