@@ -1,5 +1,36 @@
 ﻿#include "btree.h"
 
-using namespace ltc::btree;
+using namespace ltc;
+
+std::pair<Btree::iterator, bool> Btree::insert(value_type&& value)
+{
+	if (!m_root)
+		m_root = std::make_unique<LeafNode>(m_order);
+
+	const auto ip = m_root->find_insert_pos(value);
+	if (ip.second)
+		return std::make_pair(begin(), false); // Key exists
+
+	m_root->insert(ip.first, value);
+	
+	return std::make_pair(begin(), true);
+
+	// Find insert postion
+		// Is key in tree?
+			// Yes: return false
+			// No: 
+				// Node has room?
+					// Yes: insert value and return true
+					// No:
+						// Split node
+						// Find insert position in parent node
+							// Node has room?
+								// Yes: insert value and return orignal insert position
+								// No:
+									// Repeat split...
+								
+			
 
 
+
+}
