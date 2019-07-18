@@ -2,7 +2,7 @@
 
 using namespace ltc;
 
-std::pair<Btree::iterator, bool> Btree::insert(value_type&& value)
+std::pair<Btree::iterator, bool> Btree::insert(const value_type& value)
 {
 	if (!m_root)
 		m_root = std::make_unique<LeafNode>(m_order);
@@ -12,7 +12,8 @@ std::pair<Btree::iterator, bool> Btree::insert(value_type&& value)
 		return std::make_pair(begin(), false); // Key exists
 
 	m_root->insert(ip.first, value);
-	
+	m_size++;
+
 	return std::make_pair(begin(), true);
 
 	// Find insert postion

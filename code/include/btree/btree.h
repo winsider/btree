@@ -43,10 +43,8 @@ namespace ltc {
 			std::pair<const_iterator, bool> find_insert_pos(const value_type& value)
 			{
 				for (auto it = begin(); it != end(); it++)
-					if (value == *it)
-						return std::make_pair(it, true);
-					else if (value > *it)
-						return std::make_pair(it, false);
+					if (value >= *it)
+						return std::make_pair(it, value == *it);
 
 				return std::make_pair(end(), false);
 			}
@@ -103,11 +101,40 @@ namespace ltc {
 			using pointer = value_type*;
 			using reference = value_type&;
 
+			bool operator<(const iterator& it)
+			{ return m_curr_idx < it.m_curr_idx; }
+			bool operator>(const iterator& it)
+			{ return m_curr_idx > it.m_curr_idx; }
+			bool operator<=(const iterator& it)
+			{ return m_curr_idx <= it.m_curr_idx; }
+			bool operator >=(const iterator& it)
+			{ return m_curr_idx >= it.m_curr_idx; }
+			bool operator==(const iterator& it)
+			{ return m_curr_idx == it.m_curr_idx; }
+			bool operator!=(const iterator& it)
+			{ return m_curr_idx != it.m_curr_idx; }
+
+			iterator& operator++()
+			{
+				m_curr++; // TODO: More complex increment
+				m_curr_idx++;
+				return *this;
+			}
+			
+			const value_type& operator*() const
+			{
+				return *m_curr;
+			}
 
 		private:
-			iterator(Btree::Node* root) : m_curr(root->begin()) {}
+			iterator(Btree::Node* root, size_type curr_idx, size_type end_idx) 
+				: m_curr{ root->begin() + curr_idx }, m_curr_idx{ curr_idx }, m_end_idx{ end_idx } 
+			{
+			}
 
 			LeafNode::const_iterator m_curr;
+			size_type m_curr_idx;
+			size_type m_end_idx;
 		};
 
 		using const_iterator = const iterator;
@@ -123,25 +150,31 @@ namespace ltc {
 
 		// Iterators
 		iterator begin() noexcept
+		{ return iterator(m_root.get(), 0, m_size); }
+
+		//const_iterator begin() const noexcept
+		//{
+		//	return const_iterator(m_root.get(), 0, m_size);
+		//}
+
+		iterator end() noexcept
 		{
-			return iterator(m_root.get());
+			return iterator(m_root.get(), m_size, m_size);
 		}
 
-		const_iterator begin() const noexcept
-		{
-			return const_iterator(m_root.get());
-		}
-
-		iterator end() noexcept;
-		const_iterator end() const noexcept;
+		//const_iterator end() const noexcept
+		//{ return const_iterator(m_root.get(), 0, m_size); }
 
 		// Capacity
-		bool empty() const;
-		size_type size() const;
+		bool empty() const
+		{ return m_size == 0; }
+
+		size_type size() const
+		{ return m_size; }
 
 		// Modifiers
 		void clear() noexcept;
-		std::pair<iterator, bool> insert(value_type&& value);
+		std::pair<iterator, bool> insert(const value_type& value);
 		iterator erase(const_iterator pos);
 
 		// Lookup
@@ -151,6 +184,7 @@ namespace ltc {
 	private:
 		std::unique_ptr<Node> m_root;
 		size_type m_order;
+		size_type m_size{ 0 };
 	};
 
 };

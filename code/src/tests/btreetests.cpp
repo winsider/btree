@@ -4,7 +4,22 @@
 
 using namespace ltc;
 
-TEST(Btree, Insert) 
+std::pair<std::string, std::string> make_value(const std::string& k, const std::string& v)
+{
+	return std::make_pair(k, v);
+}
+
+
+TEST(Btree, empty)
+{
+	Btree b(3);
+	EXPECT_TRUE(b.empty());
+	auto r = b.insert(make_value("1", "One"));
+	EXPECT_FALSE(b.empty());
+}
+
+
+TEST(Btree, insert) 
 {
 	Btree b(3);
 	auto r1 = b.insert(std::make_pair<std::string, std::string>("1", "One"));
@@ -18,4 +33,12 @@ TEST(Btree, Insert)
 
 	auto r4 = b.insert(std::make_pair<std::string, std::string>("3", "Three"));
 	EXPECT_TRUE(r4.second);
+
+	int count{ 0 };
+	for (auto v : b)
+	{
+		count++;
+	}
+	ASSERT_EQ(count, 3);
+	ASSERT_EQ(b.size(), 3);
 }
