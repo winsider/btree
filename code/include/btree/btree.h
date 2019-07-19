@@ -19,6 +19,7 @@ namespace ltc {
 		using value_type = std::pair<Key, T>;
 
 	private:
+
 		class Node
 		{
 		public:
@@ -40,6 +41,9 @@ namespace ltc {
 				return size() == m_key_values.capacity();
 			}
 
+			size_type order() const
+			{ return m_key_values.capacity(); }
+
 			std::pair<const_iterator, bool> find_insert_pos(const value_type& value)
 			{
 				for (auto it = begin(); it != end(); it++)
@@ -54,11 +58,34 @@ namespace ltc {
 				return std::make_pair(m_key_values.insert(it, value), true);
 			}
 
-			const_iterator begin() const
+			void erase(iterator first)
+			{
+				m_key_values.erase(first, end());
+			}
+
+			void move(iterator first, Node* node)
+			{				
+				std::move(first, end(), node->begin());
+				m_key_values.erase(first);
+			}
+
+			virtual std::unique_ptr<Node> split(const_iterator it, value_type& value) = 0;
+
+			const_iterator cbegin() const
 			{ return m_key_values.begin(); }
 
-			const_iterator end() const
+			const_iterator cend() const
 			{ return m_key_values.end(); }
+
+			iterator begin()
+			{ return m_key_values.begin(); }
+
+			iterator end()
+			{ return m_key_values.end(); }
+
+		protected:
+			std::back_insert_iterator< std::vector<Btree::value_type> > back_inserter()
+			{ return std::back_insert_iterator< std::vector<Btree::value_type> >(m_key_values); }
 
 		private:
 			std::vector<Btree::value_type> m_key_values;
@@ -74,6 +101,20 @@ namespace ltc {
 				m_child_nodes.reserve(order + 1);
 			}
 
+			BranchNode(size_type order, std::unique_ptr<Node> l, value_type& value, std::unique_ptr<Node> r)
+				: Node(order)
+			{
+				// TODO: Optimize memory allocation
+				m_child_nodes.reserve(order + 1);
+				insert(begin(), value);
+				m_child_nodes.emplace_back(std::move(l));
+				m_child_nodes.emplace_back(std::move(r));
+			}
+
+		protected:
+			virtual std::unique_ptr<Node> split(const_iterator it, value_type& value)
+			{ throw new std::exception("Illagal virtual method call: BranchNode::split"); }
+
 		private:
 			std::vector<std::unique_ptr<Node>> m_child_nodes;
 		};
@@ -84,8 +125,36 @@ namespace ltc {
 
 		public:
 			LeafNode(size_type order) : Node(order) {}
+			LeafNode(size_type order, iterator first, iterator last) : Node(order)
+			{ std::move(first, last, back_inserter()); }
 
-		private:
+			virtual std::unique_ptr<Node> split(const_iterator it, value_type& value) 
+			{
+				// Find split point and calculate offest
+				const auto split_idx = (end() - begin()) / 2;
+				const auto split = begin() + split_idx;
+				const auto insert_idx = it - begin();
+
+				// Get split value
+				value_type& split_value = *split;
+				if (insert_idx == split_idx)
+					std::swap(split_value, value);
+
+				// Create two leaf nodea to receive each half
+				auto l = std::make_unique<LeafNode>(order(), begin(), split);
+				auto r = std::make_unique<LeafNode>(order(), split + 1, end());
+
+				// Insert new value
+				if (insert_idx < split_idx)
+					l->insert(l->begin() + split_idx, value);
+				else
+					r->insert(r->begin() + (split_idx - l->size()), value);
+
+				// Create and return new branch node
+				return std::make_unique<BranchNode>(order(), std::move(l), value, std::move(r));
+			}
+
+		private:			
 		};
 
 	public:
@@ -174,7 +243,7 @@ namespace ltc {
 
 		// Modifiers
 		void clear() noexcept;
-		std::pair<iterator, bool> insert(const value_type& value);
+		std::pair<iterator, bool> insert(value_type& value);
 		iterator erase(const_iterator pos);
 
 		// Lookup
