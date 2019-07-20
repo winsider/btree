@@ -146,9 +146,9 @@ namespace ltc {
 
 				// Insert new value
 				if (insert_idx < split_idx)
-					l->insert(l->begin() + split_idx, value);
+					l->insert(l->begin() + insert_idx, value);
 				else
-					r->insert(r->begin() + (split_idx - l->size()), value);
+					r->insert(r->begin() + (insert_idx - 1 - l->size()), value);
 
 				// Create and return new branch node
 				return std::make_unique<BranchNode>(order(), std::move(l), value, std::move(r));
@@ -191,9 +191,7 @@ namespace ltc {
 			}
 			
 			const value_type& operator*() const
-			{
-				return *m_curr;
-			}
+			{ return *m_curr; }
 
 		private:
 			iterator(Btree::Node* root, size_type curr_idx, size_type end_idx) 
@@ -221,18 +219,18 @@ namespace ltc {
 		iterator begin() noexcept
 		{ return iterator(m_root.get(), 0, m_size); }
 
-		//const_iterator begin() const noexcept
-		//{
-		//	return const_iterator(m_root.get(), 0, m_size);
-		//}
+		const_iterator cbegin() const noexcept
+		{
+			return const_iterator(m_root.get(), 0, m_size);
+		}
 
 		iterator end() noexcept
 		{
 			return iterator(m_root.get(), m_size, m_size);
 		}
 
-		//const_iterator end() const noexcept
-		//{ return const_iterator(m_root.get(), 0, m_size); }
+		const_iterator cend() const noexcept
+		{ return const_iterator(m_root.get(), 0, m_size); }
 
 		// Capacity
 		bool empty() const

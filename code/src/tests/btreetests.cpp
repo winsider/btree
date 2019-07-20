@@ -68,3 +68,18 @@ TEST(Btree, InsertWithSplitLast)
 	ASSERT_EQ(b.size(), 4);
 }
 
+TEST(Btree, IterateWithSplit)
+{
+	Btree b(3);
+	auto r1 = b.insert(make_value("2", "Two"));
+	auto r2 = b.insert(make_value("1", "One"));
+	auto r3 = b.insert(make_value("3", "Three"));
+	auto r4 = b.insert(make_value("4", "Four"));
+
+	std::string s;
+	for (auto v : b)
+	{
+		s += v.first;
+	}
+	ASSERT_EQ(s, "1234");
+}
